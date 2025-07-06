@@ -2,13 +2,32 @@
 
 *Folder Structure*
 ```bash
-frontend/
-├── ...
-├── daisyui.js
-├── daisyui-theme.js
-├── tailwind.css
-├── tailwindcss
-├── Trunk.toml
+frontend
+├── Cargo.lock
+├── Cargo.toml
+├── dist
+├── docs
+│   └── using_daisyui_standalone.md
+├── index.html
+├── src
+│   ├── components
+│   │   ├── header.rs
+│   │   └── mod.rs
+│   ├── lib.rs
+│   ├── main.rs
+│   ├── pages
+│   │   ├── base.rs
+│   │   └── mod.rs
+│   └── router.rs
+├── static
+│   └── src
+│       ├── css
+│       │   └── tailwind.css
+│       ├── js
+│       │   ├── daisyui.js
+│       │   └── daisyui-theme.js
+│       └── tailwindcss
+└── Trunk.toml
 ```
 
 1. Download the Tailwind CSS executable
