@@ -1,0 +1,9 @@
+@import "tailwindcss" source(none);
+@source "../../../src/**/*.{rs,html}"; /* Scan Rust (.rs) and HTML files in the src folder */
+@plugin "../js/daisyui.js"; /* Add daisyUI standalone plugin */
+
+/* Optional theme customization */
+@plugin "../js/daisyui-theme.js" {
+    /* Example: change primary color */
+    --color-primary: #00ff00;
+}
