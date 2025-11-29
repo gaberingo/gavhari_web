@@ -1,0 +1,11 @@
+[package]
+name = "gavhari_fe"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+yew = { version = "0.21", features = ['csr'] }
+yew-router = "0.18"
+gloo-net = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
