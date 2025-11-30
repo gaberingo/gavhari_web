@@ -1,3 +1,4 @@
+use bcrypt::verify;
 use diesel::prelude::*;
 
 #[derive(Queryable, Selectable)]
@@ -8,4 +9,10 @@ pub struct Users {
     pub name: String,
     pub email: Option<String>,
     pub password: String,
+}
+
+impl Users {
+    pub fn verify(self, pass: &str) -> bool {
+        verify(pass, &self.password).unwrap_or(false)
+    }
 }

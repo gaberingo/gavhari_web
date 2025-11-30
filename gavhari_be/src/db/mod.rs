@@ -1,15 +1,16 @@
 mod middleware;
-mod models;
+pub mod models;
 
 use diesel::{
     prelude::*,
-    r2d2::{self, ConnectionManager, Pool},
+    r2d2::{self, ConnectionManager, Pool, PooledConnection},
 };
 use dotenvy::dotenv;
-pub use middleware::DbCheck;
 use std::env;
 
+pub use middleware::DbCheck;
 pub type DbPool = Pool<ConnectionManager<PgConnection>>;
+pub type DbPooled = PooledConnection<ConnectionManager<PgConnection>>;
 
 pub fn establish_connection() -> DbPool {
     dotenv().ok();

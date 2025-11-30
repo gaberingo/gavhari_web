@@ -7,11 +7,10 @@ use std::rc::Rc;
 
 use actix_session::Session;
 use actix_session::{SessionMiddleware, storage::CookieSessionStore};
-use actix_web::Error;
 use actix_web::{
     App, HttpResponse, HttpServer, Responder, cookie::Key, get, middleware::Logger, web,
 };
-use db::{DbPool, establish_connection};
+use db::establish_connection;
 use dotenvy::dotenv;
 use env_logger::Env;
 use serde_json::json;
@@ -36,10 +35,13 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .wrap(Logger::default()) // PERBAIKAN: Logger di-wrap paling luar
+            // Logger
+            .wrap(Logger::default())
+            // Pastikan Database Terhubung
             .wrap(db::DbCheck {
                 pool: Rc::new(db_pool.clone()),
             })
+            // Pastikan session ada
             .wrap(auth::SessionGuard)
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
