@@ -1,9 +1,9 @@
 use actix_session::Session;
-use actix_web::{HttpResponse, Responder, get, post, web};
+use actix_web::{HttpResponse, Responder, error::ErrorInternalServerError, get, post, web};
 use serde_json::json;
 
 use super::{dto::*, services::user_login_verified};
-use crate::{auth::SessionData, db::DbPool};
+use crate::{db::DbPool, modules::users::services::user_registration};
 
 #[get("")]
 async fn get_users() -> impl Responder {
@@ -27,11 +27,20 @@ async fn user_login(
     }
 }
 
-#[post("/create")]
-async fn user_create(
+#[post("/register")]
+async fn user_register(
     sess: Session,
-    create_data: web::Form<CreateUserForm>,
+    register_data: web::Form<CreateUserForm>,
     pool: web::Data<DbPool>,
-) -> impl Responder {
-    HttpResponse::Ok().json(json!("test"))
+) -> actix_web::Result<HttpResponse> {
+    let data_form = register_data.into_inner();
+    let mut conn = pool.get().unwrap();
+    let result = web::block(move || user_registration(&mut conn, data_form))
+        .await?
+        .map_err(ErrorInternalServerError)?;
+    Ok(HttpResponse::Ok().json(json!({
+        "status":"success",
+        "id":result.id,
+        "username":result.username
+    })))
 }

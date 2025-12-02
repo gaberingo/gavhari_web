@@ -1,5 +1,5 @@
 mod middleware;
-pub mod models;
+mod models;
 
 use diesel::{
     prelude::*,
@@ -9,6 +9,7 @@ use dotenvy::dotenv;
 use std::env;
 
 pub use middleware::DbCheck;
+pub use models::*;
 pub type DbPool = Pool<ConnectionManager<PgConnection>>;
 pub type DbPooled = PooledConnection<ConnectionManager<PgConnection>>;
 
