@@ -5,32 +5,46 @@ use argon2::{
 use diesel::{ExpressionMethods, RunQueryDsl, query_dsl::methods::FilterDsl};
 
 use crate::{
-    db::{CreateUser, DbPooled, Users},
-    modules::users::CreateUserForm,
+    db::{DbPooled, Users},
+    modules::users::CreateUser,
 };
 
-pub fn user_login_verified(conn: &mut DbPooled, uname: &str, pass: &str) -> bool {
+use super::dto::*;
+
+pub fn user_login_verified(conn: &mut DbPooled, uname: &str, pass: &str) -> Option<Users> {
     use crate::schema::users::dsl::*;
     users
         .filter(username.eq(uname))
         .first::<Users>(conn)
         .ok()
-        .map(|u| u.verify(pass))
-        .unwrap_or(false)
+        .filter(|u| u.verify(pass))
 }
 
-pub fn user_registration(
-    conn: &mut DbPooled,
-    form: CreateUserForm,
-) -> Result<Users, diesel::result::Error> {
-    use crate::schema::users::dsl::*;
+impl CreateUser {
+    pub fn user_register(&self, conn: &mut DbPooled) -> Result<(), diesel::result::Error> {
+        use crate::schema::users::dsl::*;
 
-    let salt = SaltString::generate(&mut OsRng);
-    let hash_pass = Argon2::default()
-        .hash_password(form.password.as_bytes(), &salt)
-        .unwrap()
-        .to_string();
-    let new_user = CreateUser::new(form.username, hash_pass);
+        let mut new_user = self.clone();
+        let salt = SaltString::generate(&mut OsRng);
+        let hash_pass = Argon2::default()
+            .hash_password(new_user.password.as_bytes(), &salt)
+            .unwrap()
+            .to_string();
+        new_user.password = hash_pass;
+        diesel::insert_into(users)
+            .values(new_user)
+            .execute(conn)
+            .map(|_| ())
+    }
+}
 
-    diesel::insert_into(users).values(new_user).get_result(conn)
+// User Session
+impl From<&Users> for UserSession {
+    fn from(value: &Users) -> Self {
+        Self {
+            user_id: value.id,
+            username: value.username.clone(),
+            role: "admin".to_string(),
+        }
+    }
 }

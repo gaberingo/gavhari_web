@@ -6,7 +6,8 @@ mod schema;
 use std::rc::Rc;
 
 use actix_session::Session;
-use actix_session::{SessionMiddleware, storage::CookieSessionStore};
+use actix_session::{SessionMiddleware, storage::RedisSessionStore};
+use actix_web::cookie::SameSite;
 use actix_web::{
     App, HttpResponse, HttpServer, Responder, cookie::Key, get, middleware::Logger, web,
 };
@@ -17,7 +18,7 @@ use serde_json::json;
 
 #[get("/")]
 async fn index(sess: Session) -> impl Responder {
-    let sess_data = sess.get::<auth::SessionData>("session_data").ok().flatten();
+    let sess_data = sess.get::<auth::UserSession>("user_session").ok().flatten();
     match sess_data {
         Some(s) => HttpResponse::Ok().json(json!(s)),
         None => HttpResponse::Ok().json(json!({"msg":"Session not found"})),
@@ -32,6 +33,9 @@ async fn main() -> std::io::Result<()> {
     let secret_key = Key::generate();
 
     let db_pool = establish_connection();
+    let redis_store = RedisSessionStore::new("redis://:gavharipass@127.0.0.1:6379")
+        .await
+        .expect("Cannot connect redis");
 
     HttpServer::new(move || {
         App::new()
@@ -44,9 +48,9 @@ async fn main() -> std::io::Result<()> {
             // Pastikan session ada
             .wrap(auth::SessionGuard)
             .wrap(
-                SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
+                SessionMiddleware::builder(redis_store.clone(), secret_key.clone())
                     .cookie_secure(false)
-                    .cookie_name(String::from("session_id"))
+                    .cookie_name(String::from("user_session"))
                     .cookie_http_only(true) // Security improvement
                     .cookie_same_site(actix_web::cookie::SameSite::Lax) // Security improvement
                     .build(),

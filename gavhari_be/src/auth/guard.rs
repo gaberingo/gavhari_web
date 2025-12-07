@@ -7,7 +7,7 @@ use chrono::Utc;
 use futures_util::future::LocalBoxFuture;
 use std::future::{Ready, ready};
 
-use crate::auth::dto::SessionData;
+use crate::auth::dto::UserSession;
 
 pub struct SessionGuard;
 pub struct SessionGuardMiddleware<S> {
@@ -46,13 +46,12 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let session = Session::extract(req.request()).into_inner().ok();
         if let Some(sess) = session {
-            match sess.get::<SessionData>("session_data") {
+            match sess.get::<UserSession>("user_session") {
                 Ok(Some(mut sess_data)) => {
-                    println!("Session Ditemukan : {}", sess_data.session_id);
-                    sess_data.last_accesses = Utc::now().timestamp();
-                    sess_data.visit_count += 1;
+                    dbg!("Session Ditemukan : {}", &sess_data);
+                    sess_data.update_last_access();
 
-                    if let Err(e) = sess.insert("session_data", &sess_data) {
+                    if let Err(e) = sess.insert("user_session", &sess_data) {
                         println!("Error Updating session: {}", e);
                     } else {
                         println!("Session Updating - Visit Count : {}", sess_data.visit_count);
@@ -60,11 +59,12 @@ where
                 }
                 Ok(None) => {
                     println!("Creating Session !");
-                    let new_sess = SessionData::new();
-                    if let Err(e) = sess.insert("session_data", &new_sess) {
+                    let new_sess = UserSession::new();
+                    if let Err(e) = sess.insert("user_session", &new_sess) {
                         println!("Error Create Session: {}", e);
                     } else {
-                        println!("Session Created : {}", new_sess.session_id);
+                        println!("New session created");
+                        dbg!(new_sess);
                     }
                 }
                 Err(e) => {

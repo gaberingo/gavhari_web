@@ -1,38 +1,41 @@
 use actix_web::cookie::time::UtcDateTime;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct SessionData {
-    pub session_id: String,
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct UserSessionData {
+    id: i32,
+    role: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserSession {
     pub created_at: i64,
     pub last_accesses: i64,
     pub visit_count: u32,
-    pub is_guest: bool,
+    pub anonim_user: bool,
+    pub data: Option<UserSessionData>,
 }
 
-impl SessionData {
+impl UserSession {
     pub fn new() -> Self {
         let now = UtcDateTime::now().unix_timestamp();
-        SessionData {
-            session_id: Uuid::new_v4().to_string(),
+        UserSession {
             created_at: now,
             last_accesses: now,
             visit_count: 0,
-            is_guest: true,
+            anonim_user: true,
+            data: None,
         }
     }
 
-    pub fn update_last_access(&mut self, timestamp: i64) {
-        self.last_accesses = timestamp;
-    }
-
-    pub fn with_updated_access(mut self, timestamp: i64) -> Self {
-        self.last_accesses = timestamp;
-        self
+    pub fn update_last_access(&mut self) {
+        let now = Utc::now().timestamp();
+        self.last_accesses = now;
+        self.visit_count += 1;
     }
 
     pub fn authenticate(&mut self) {
-        self.is_guest = false;
+        self.anonim_user = false;
     }
 }
